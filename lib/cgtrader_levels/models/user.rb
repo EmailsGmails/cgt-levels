@@ -17,7 +17,8 @@ class CgtraderLevels::User < ActiveRecord::Base
   private
 
   def set_new_level
-    matching_level = CgtraderLevels::Level.where(experience: reputation).first
+    levels = CgtraderLevels::Level.all.order(:experience).reverse
+    matching_level = levels.find { |level| self.reputation >= level.experience }
 
     if matching_level
       self.level_id = matching_level.id
