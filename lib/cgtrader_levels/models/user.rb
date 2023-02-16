@@ -1,28 +1,47 @@
-class CgtraderLevels::User < ActiveRecord::Base
-  attr_reader :level
+require 'cgtrader_levels/models/privilege'
+require 'cgtrader_levels/models/level'
+require 'cgtrader_levels/models/level_privilege'
 
-  after_initialize do
-    self.reputation = 0
+module CgtraderLevels
+  class User < ActiveRecord::Base
+    belongs_to :level
+    attr_reader :level
 
-    matching_level = CgtraderLevels::Level.where(experience: reputation).first
-
-    if matching_level
-      self.level_id = matching_level.id
-      @level = matching_level
+    def level
+      CgtraderLevels::Level.where('experience <= ?', reputation).order(experience: :desc).first
     end
-  end
 
-  after_update :set_new_level
+    after_initialize do
+      self.reputation ||= 0
 
-  private
+      matching_level = level
 
-  def set_new_level
-    levels = CgtraderLevels::Level.all.order(:experience).reverse
-    matching_level = levels.find { |level| self.reputation >= level.experience }
+      if matching_level
+        self.level_id = matching_level.id
+        @level = matching_level
+      end
+    end
 
-    if matching_level
-      self.level_id = matching_level.id
-      @level = matching_level
+    before_save :set_new_level
+
+    private
+
+    def set_new_level
+      matching_level = level
+
+      if matching_level
+        self.level_id = matching_level.id
+        set_level_privileges(matching_level.privileges) if !matching_level.privileges.blank?
+        @level = matching_level
+      end
+    end
+
+    def set_level_privileges(privileges)
+      privileges.each { |privilege|
+        if privilege.valid?
+          self.send("#{privilege.technical_name}=", self.send(privilege.technical_name) + privilege.value)
+        end
+      }
     end
   end
 end
