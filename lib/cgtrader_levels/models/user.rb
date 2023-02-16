@@ -7,6 +7,8 @@ module CgtraderLevels
     belongs_to :level
     attr_reader :level
 
+    validates :tax, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }
+
     def level
       CgtraderLevels::Level.where('experience <= ?', reputation).order(experience: :desc).first
     end

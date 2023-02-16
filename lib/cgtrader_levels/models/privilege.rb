@@ -4,13 +4,14 @@ module CgtraderLevels
     has_many :levels, through: :level_privileges
 
     validates :value, presence: true
-    validates :technical_name, presence: true, uniqueness: true
+    validates :technical_name, presence: true
 
-    PRIVILEGE_ELIGIBLE_ITEMS = %w(coins tax)
+    PRIVILEGE_ELIGIBLE_ITEMS = %w(coins tax).freeze
 
     def available_name
       if !PRIVILEGE_ELIGIBLE_ITEMS.include?(technical_name)
-        errors.add(:technical_name, "please provide a valid technical name from available choices: #{PRIVILEGE_ELIGIBLE_ITEMS.join(', ')}")
+        errors.add(:technical_name,
+          "please provide a valid technical name from available choices: \"#{PRIVILEGE_ELIGIBLE_ITEMS.join('", "')}\"")
       end
     end
 
